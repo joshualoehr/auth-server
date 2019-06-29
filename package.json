@@ -4,7 +4,8 @@
   "description": "Authentication Server",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "start": "nodemon server.js",
+    "test": "mocha ./tests --recursive"
   },
   "author": "Josh Loehr",
   "license": "MIT",
