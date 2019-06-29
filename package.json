@@ -1,0 +1,14 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "Authentication Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Josh Loehr",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
