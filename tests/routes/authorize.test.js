@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const Dao = require('../../dao');
 let dao = sinon.createStubInstance(Dao);
 
-let { login } = require('../../routes/login');
+let { authorize } = require('../../routes/authorize');
 let req, res;
 
 beforeEach(() => {
@@ -17,13 +17,13 @@ afterEach(() => {
     sinon.restore();
 });
 
-describe('Login Route', () => {
-    describe('Login() function', () => {
+describe('Authorize Route', () => {
+    describe('authorize() function', () => {
         it('Should return 400 error when login is not provided', async () => {
             req.body.password = 'password';
 
             let next = sinon.spy();
-            await login(dao)(req, res, next);
+            await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
@@ -31,7 +31,7 @@ describe('Login Route', () => {
             req.body.login = 'login';
 
             let next = sinon.spy();
-            await login(dao)(req, res, next);
+            await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
@@ -41,7 +41,7 @@ describe('Login Route', () => {
             dao.checkLoginExists.returns(Promise.resolve(false));
 
             let next = sinon.spy();
-            await login(dao)(req, res, next);
+            await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(404);
         });
@@ -52,7 +52,7 @@ describe('Login Route', () => {
             dao.getUser.returns(Promise.resolve(null));
 
             let next = sinon.spy();
-            await login(dao)(req, res, next);
+            await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(401);
         });

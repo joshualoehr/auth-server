@@ -16,8 +16,8 @@ app.use((err, req, res, next) => {
 });
 
 // Configure routes
-const { login } = require('./routes/login');
-app.post('/login', login(dao));
+const { authorize } = require('./routes/authorize');
+app.post('/authorize', authorize(dao));
 app.get('*', (req, res, next) => {
     let err = new Error('Page Not Found');
     err.statusCode = 404;

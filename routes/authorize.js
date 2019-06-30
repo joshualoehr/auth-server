@@ -1,7 +1,7 @@
 const { errorWithCode } = require('../util');
 
 module.exports = {
-    login: dao => async (req, res, next) => {
+    authorize: dao => async (req, res, next) => {
         try {
             const requiredArgs = ['login', 'password'];
             requiredArgs.forEach(arg => {
