@@ -1,3 +1,7 @@
 module.exports = {
-    errorWithCode: (error, statusCode = 500) => ({ statusCode, ...new Error(error) })
+    errorWithCode: (error, statusCode = 500) => {
+        let err = new Error(error);
+        err.statusCode = statusCode;
+        return err;
+    }
 };

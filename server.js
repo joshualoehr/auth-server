@@ -1,14 +1,16 @@
 const express = require('express');
 const app = express();
+const bodyParser = require('body-parser');
 
 // Initialize database connection
 const mysql = require('mysql');
 const conn = mysql.createConnection(require('./db_config.json'));
-const dao = require('./dao')(conn);
+const Dao = require('./dao');
+const dao = new Dao(conn);
 
-// Configure error handling middleware
+// Configure middleware
+app.use(bodyParser.json());
 app.use((err, req, res, next) => {
-    console.error(err.message);
     if (!err.statusCode) err.statusCode = 500;
     res.status(err.statusCode).send(err.message);
 });

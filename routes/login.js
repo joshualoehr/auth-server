@@ -21,6 +21,9 @@ module.exports = {
             if (!user) {
                 throw errorWithCode('Invalid login/password combination', 401);
             }
+
+            delete user.password_id;
+            res.send(JSON.stringify(user));
         } catch (err) {
             next(err);
         }
