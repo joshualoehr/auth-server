@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const path = require('path');
 
 // Initialize database connection
 const mysql = require('mysql');
@@ -18,6 +19,9 @@ app.use((err, req, res, next) => {
 
 // Configure routes
 const { authorize } = require('./routes/authorize');
+app.get('/', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'pages/index.html'));
+});
 app.get('/authorize', (req, res, next) => {
     req.body = req.query;
     authorize(dao)(req, res, next);

@@ -1,3 +1,4 @@
+const path = require('path');
 const { errorWithCode } = require('../util');
 
 const REQUIRED_PARAMS = ['scope', 'response_type', 'client_id', 'redirect_uri', 'nonce'];
@@ -66,8 +67,9 @@ module.exports = {
             config.response_type = validateResponseType(response_type);
             config.client = await validateClientID(dao, client_id);
             config.redirect_uri = validateRedirectUri(redirect_uri, config.client);
+            config.nonce = nonce;
 
-            res.status(200);
+            res.sendFile(path.join(__dirname + '/../pages/login.html'));
         } catch (err) {
             next(err);
         }

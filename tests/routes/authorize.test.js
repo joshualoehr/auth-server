@@ -23,7 +23,7 @@ const validClient = {
 
 beforeEach(() => {
     req = { body: { ...validRequestParams } };
-    res = { status: sinon.fake() };
+    res = { status: sinon.fake(), sendFile: sinon.spy() };
     next = sinon.spy();
 });
 
@@ -95,12 +95,13 @@ describe('Authorize Route', () => {
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
-        it('Should not return an error when all required params are provided and valid', async () => {
+        it('Should serve the login page when all required params are provided and valid', async () => {
             dao.getClient.returns(Promise.resolve(validClient));
 
             await authorize(dao)(req, res, next);
 
             expect(next.called).to.equal(false);
+            expect(res.sendFile.called).to.equal(true);
         });
         // it('Should return 404 error when login does not exist', async () => {
         //     dao.checkLoginExists.returns(Promise.resolve(false));
