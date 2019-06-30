@@ -10,6 +10,7 @@ const dao = new Dao(conn);
 
 // Configure middleware
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use((err, req, res, next) => {
     if (!err.statusCode) err.statusCode = 500;
     res.status(err.statusCode).send(err.message);
@@ -17,6 +18,10 @@ app.use((err, req, res, next) => {
 
 // Configure routes
 const { authorize } = require('./routes/authorize');
+app.get('/authorize', (req, res, next) => {
+    req.body = req.query;
+    authorize(dao)(req, res, next);
+});
 app.post('/authorize', authorize(dao));
 app.get('*', (req, res, next) => {
     let err = new Error('Page Not Found');
