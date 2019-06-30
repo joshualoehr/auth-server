@@ -103,20 +103,5 @@ describe('Authorize Route', () => {
             expect(next.called).to.equal(false);
             expect(res.sendFile.called).to.equal(true);
         });
-        // it('Should return 404 error when login does not exist', async () => {
-        //     dao.checkLoginExists.returns(Promise.resolve(false));
-
-        //     await authorize(dao)(req, res, next);
-
-        //     expect(next.getCall(0).args[0].statusCode).to.equal(404);
-        // });
-        // it('Should return 401 error when incorrect password provided', async () => {
-        //     dao.checkLoginExists.returns(Promise.resolve(true));
-        //     dao.getUser.returns(Promise.resolve(null));
-
-        //     await authorize(dao)(req, res, next);
-
-        //     expect(next.getCall(0).args[0].statusCode).to.equal(401);
-        // });
     });
 });
