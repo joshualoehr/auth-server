@@ -1,19 +1,28 @@
+const { errorWithCode } = require('../util');
+
 module.exports = {
-    login: (req, res, next) => {
-        let err;
+    login: dao => async (req, res, next) => {
+        try {
+            const requiredArgs = ['login', 'password'];
+            requiredArgs.forEach(arg => {
+                if (!req.body[arg]) {
+                    throw errorWithCode(`${arg} is a required parameter`, 400);
+                }
+            });
 
-        const requiredArgs = ['login', 'password'];
-        requiredArgs.some(arg => {
-            if (!req.body[arg]) {
-                err = new Error(`${arg} is a required parameter`);
-                err.statusCode = 400;
-                return true;
+            const { login, password } = req.body;
+
+            const exists = await dao.checkLoginExists(login);
+            if (!exists) {
+                throw errorWithCode(`Login ${login} Not Found`, 404);
             }
-        });
 
-        if (err) {
+            const user = await dao.getUser(login, password);
+            if (!user) {
+                throw errorWithCode('Invalid login/password combination', 401);
+            }
+        } catch (err) {
             next(err);
-            return;
         }
     }
 };

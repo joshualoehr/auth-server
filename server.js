@@ -4,7 +4,7 @@ const app = express();
 // Initialize database connection
 const mysql = require('mysql');
 const conn = mysql.createConnection(require('./db_config.json'));
-conn.connect();
+const dao = require('./dao')(conn);
 
 // Configure error handling middleware
 app.use((err, req, res, next) => {
@@ -15,7 +15,7 @@ app.use((err, req, res, next) => {
 
 // Configure routes
 const { login } = require('./routes/login');
-app.post('/login', login);
+app.post('/login', login(dao));
 app.get('*', (req, res, next) => {
     let err = new Error('Page Not Found');
     err.statusCode = 404;

@@ -1,33 +1,60 @@
 const expect = require('chai').expect;
+const sinon = require('sinon');
 
-const { login } = require('../../routes/login');
+const Dao = require('../../dao');
+let dao = sinon.createStubInstance(Dao);
 
-let req, res, next;
+let { login } = require('../../routes/login');
+let req, res;
 
 beforeEach(() => {
     req = {
         body: {}
     };
-    res = {
-        sendCalledWith: '',
-        send: function(arg) {
-            this.sendCalledWith = arg;
-        }
-    };
-    next = err => (res = err);
+});
+
+afterEach(() => {
+    sinon.restore();
 });
 
 describe('Login Route', () => {
     describe('Login() function', () => {
-        it('Should return 400 error when login is not provided', () => {
+        it('Should return 400 error when login is not provided', async () => {
             req.body.password = 'password';
-            login(req, res, next);
-            expect(res.statusCode).to.equal(400);
+
+            let next = sinon.spy();
+            await login(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
-        it('Should return 400 error when password is not provided', () => {
+        it('Should return 400 error when password is not provided', async () => {
             req.body.login = 'login';
-            login(req, res, next);
-            expect(res.statusCode).to.equal(400);
+
+            let next = sinon.spy();
+            await login(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.equal(400);
+        });
+        it('Should return 404 error when login does not exist', async () => {
+            req.body = { login: 'login', password: 'password' };
+
+            dao.checkLoginExists.returns(Promise.resolve(false));
+
+            let next = sinon.spy();
+            await login(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.equal(404);
+        });
+        it('Should return 401 error when incorrect password provided', async () => {
+            req.body = { login: 'login', password: 'password' };
+
+            dao.checkLoginExists.returns(Promise.resolve(true));
+            dao.getUser.returns(Promise.resolve(null));
+
+            let next = sinon.spy();
+            await login(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.equal(401);
         });
     });
 });
