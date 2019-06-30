@@ -8,6 +8,13 @@ const verifyRequiredParam = (param, req) => {
     }
 };
 
+const validateScope = scope => {
+    if (!scope.split(' ').includes('openid')) {
+        throw errorWithCode(`Invalid scope "${scope}"`, 400);
+    }
+    return scope;
+};
+
 // For implicit flow, response_type is required to include "id_token".
 // In addition, "token" is also allowed; all others are ignored.
 const validateResponseType = response_type => {
@@ -55,24 +62,12 @@ module.exports = {
             const { scope, response_type, client_id, redirect_uri, nonce } = req.body;
             const config = {};
 
+            config.scope = validateScope(scope);
             config.response_type = validateResponseType(response_type);
             config.client = await validateClientID(dao, client_id);
             config.redirect_uri = validateRedirectUri(redirect_uri, config.client);
 
-            const { login, password } = req.body;
-
-            const exists = await dao.checkLoginExists(login);
-            if (!exists) {
-                throw errorWithCode(`Login ${login} Not Found`, 404);
-            }
-
-            const user = await dao.getUser(login, password);
-            if (!user) {
-                throw errorWithCode('Invalid login/password combination', 401);
-            }
-
-            delete user.password_id;
-            res.send(JSON.stringify(user));
+            res.status(200);
         } catch (err) {
             next(err);
         }

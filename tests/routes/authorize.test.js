@@ -23,6 +23,7 @@ const validClient = {
 
 beforeEach(() => {
     req = { body: { ...validRequestParams } };
+    res = { status: sinon.fake() };
     next = sinon.spy();
 });
 
@@ -43,6 +44,13 @@ describe('Authorize Route', () => {
     describe('Implicit Flow', () => {
         REQUIRED_PARAMS.forEach(param => {
             it(`Should return 400 error when ${param} is not provided`, testRequiredParam(param));
+        });
+        it('Should return 400 error when scope does not include openid', async () => {
+            req.body.scope = 'something else';
+
+            await authorize(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
         it('Should return 400 error when response_type is neither "id_token" nor "id_token token"', async () => {
             req.body.response_type = 'code';
@@ -87,16 +95,12 @@ describe('Authorize Route', () => {
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
-        it('Should not return 4XX error when all required params are provided and valid', async () => {
+        it('Should not return an error when all required params are provided and valid', async () => {
             dao.getClient.returns(Promise.resolve(validClient));
 
             await authorize(dao)(req, res, next);
 
-            const returnedErrorCode = next
-                .getCall(0)
-                .args[0].statusCode.toString()
-                .startsWith('4');
-            expect(returnedErrorCode).to.equal(false);
+            expect(next.called).to.equal(false);
         });
         // it('Should return 404 error when login does not exist', async () => {
         //     dao.checkLoginExists.returns(Promise.resolve(false));
