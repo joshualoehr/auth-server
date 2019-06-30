@@ -4,13 +4,14 @@ const sinon = require('sinon');
 const Dao = require('../../dao');
 let dao = sinon.createStubInstance(Dao);
 
-let { authorize } = require('../../routes/authorize');
-let req, res;
+let { authorize, REQUIRED_PARAMS } = require('../../routes/authorize');
+let req, res, next;
 
 beforeEach(() => {
     req = {
         body: {}
     };
+    next = sinon.spy();
 });
 
 afterEach(() => {
@@ -21,7 +22,8 @@ const validRequestParams = {
     scope: 'openid',
     response_type: 'id_token token',
     client_id: 'app123',
-    redirect_uri: 'http://localhost:3000'
+    redirect_uri: 'http://localhost:3000',
+    nonce: '66eb5d10422547ea51f97b4416d3a73c'
 };
 
 const testRequiredParam = param => async () => {
@@ -35,13 +37,12 @@ const testRequiredParam = param => async () => {
 
 describe('Authorize Route', () => {
     describe('Implicit Flow', () => {
-        ['scope', 'response_type', 'client_id', 'redirect_uri'].forEach(param => {
+        REQUIRED_PARAMS.forEach(param => {
             it(`Should return 400 error when ${param} is not provided`, testRequiredParam(param));
         });
         it('Should return 400 error when response_type is neither "id_token" nor "id_token token"', async () => {
             req.body = { ...validRequestParams, response_type: 'code' };
 
-            let next = sinon.spy();
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
@@ -49,7 +50,6 @@ describe('Authorize Route', () => {
         it('Should return 400 error when redirect_uri malformed"', async () => {
             req.body = { ...validRequestParams, redirect_uri: 'asdf' };
 
-            let next = sinon.spy();
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
@@ -57,7 +57,6 @@ describe('Authorize Route', () => {
         it('Should return 400 error when redirect_uri uses http without localhost"', async () => {
             req.body = { ...validRequestParams, redirect_uri: 'http://www.google.com' };
 
-            let next = sinon.spy();
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
@@ -67,12 +66,18 @@ describe('Authorize Route', () => {
             await authorize(dao)(req, res, next);
             expect(next.getCall(1).args[0].statusCode).to.equal(400);
         });
+        it('Should not return 400 error when all required params are provided and valid', async () => {
+            req.body = validRequestParams;
+
+            await authorize(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.not.equal(400);
+        });
         it('Should return 404 error when login does not exist', async () => {
             req.body = validRequestParams;
 
             dao.checkLoginExists.returns(Promise.resolve(false));
 
-            let next = sinon.spy();
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(404);
@@ -83,7 +88,6 @@ describe('Authorize Route', () => {
             dao.checkLoginExists.returns(Promise.resolve(true));
             dao.getUser.returns(Promise.resolve(null));
 
-            let next = sinon.spy();
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(401);
