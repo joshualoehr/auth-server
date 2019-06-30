@@ -22,17 +22,26 @@ const validateResponseType = response_type => {
     return parsed;
 };
 
+const validateClientID = (dao, client_id) =>
+    dao.getClient(client_id).then(client => {
+        if (!client) {
+            throw errorWithCode(`Invalid client_id "${client_id}"`, 404);
+        }
+        return client;
+    });
+
 // For implicit flow, redirect_uri must use https, with http://localhost:xxxx as an exception.
-const validateRedirectUri = redirect_uri => {
+const validateRedirectUri = (redirect_uri, client) => {
     const regex = /http:\/\/localhost(:\d+)?(\/|$).*/g;
     if (redirect_uri.startsWith('http:')) {
-        if (redirect_uri.match(regex)) {
-            return redirect_uri;
+        if (!redirect_uri.match(regex)) {
+            throw errorWithCode(`Invalid redirect_uri "${redirect_uri}" (may only use http scheme for localhost)`, 400);
         }
-        throw errorWithCode(`Invalid redirect_uri "${redirect_uri}" (may only use http scheme for localhost)`, 400);
-    }
-    if (!redirect_uri.startsWith('https')) {
+    } else if (!redirect_uri.startsWith('https')) {
         throw errorWithCode(`Invalid redirect_uri "${redirect_uri}" (only localhost may use http)`, 400);
+    }
+    if (redirect_uri !== client.redirect_uri) {
+        throw errorWithCode(`Invalid redirect_uri for client_id "${client.client_id}"`, 400);
     }
     return redirect_uri;
 };
@@ -47,7 +56,8 @@ module.exports = {
             const config = {};
 
             config.response_type = validateResponseType(response_type);
-            config.redirect_uri = validateRedirectUri(redirect_uri);
+            config.client = await validateClientID(dao, client_id);
+            config.redirect_uri = validateRedirectUri(redirect_uri, config.client);
 
             const { login, password } = req.body;
 

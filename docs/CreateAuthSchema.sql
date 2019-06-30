@@ -15,3 +15,9 @@ CREATE TABLE users (
 	ON UPDATE CASCADE
 	ON DELETE RESTRICT
 );
+
+CREATE TABLE oauth_clients (
+	client_id VARCHAR(20) NOT NULL PRIMARY KEY,
+    client_secret VARCHAR(100) NOT NULL,
+    redirect_uri VARCHAR(100) NOT NULL
+);

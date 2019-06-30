@@ -7,17 +7,6 @@ let dao = sinon.createStubInstance(Dao);
 let { authorize, REQUIRED_PARAMS } = require('../../routes/authorize');
 let req, res, next;
 
-beforeEach(() => {
-    req = {
-        body: {}
-    };
-    next = sinon.spy();
-});
-
-afterEach(() => {
-    sinon.restore();
-});
-
 const validRequestParams = {
     scope: 'openid',
     response_type: 'id_token token',
@@ -26,8 +15,23 @@ const validRequestParams = {
     nonce: '66eb5d10422547ea51f97b4416d3a73c'
 };
 
+const validClient = {
+    client_id: validRequestParams.client_id,
+    client_secret: 'secret',
+    redirect_uri: validRequestParams.redirect_uri
+};
+
+beforeEach(() => {
+    req = { body: { ...validRequestParams } };
+    next = sinon.spy();
+});
+
+afterEach(() => {
+    sinon.restore();
+});
+
 const testRequiredParam = param => async () => {
-    req.body = { ...validRequestParams, [param]: null };
+    delete req.body[param];
 
     let next = sinon.spy();
     await authorize(dao)(req, res, next);
@@ -41,56 +45,73 @@ describe('Authorize Route', () => {
             it(`Should return 400 error when ${param} is not provided`, testRequiredParam(param));
         });
         it('Should return 400 error when response_type is neither "id_token" nor "id_token token"', async () => {
-            req.body = { ...validRequestParams, response_type: 'code' };
+            req.body.response_type = 'code';
 
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
+        it('Should return 404 error when provided client_id does not exist', async () => {
+            dao.getClient.returns(Promise.resolve(null));
+
+            await authorize(dao)(req, res, next);
+
+            expect(next.getCall(0).args[0].statusCode).to.equal(404);
+        });
         it('Should return 400 error when redirect_uri malformed"', async () => {
-            req.body = { ...validRequestParams, redirect_uri: 'asdf' };
+            dao.getClient.returns(Promise.resolve(validClient));
+            req.body.redirect_uri = 'asdf';
 
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
         it('Should return 400 error when redirect_uri uses http without localhost"', async () => {
-            req.body = { ...validRequestParams, redirect_uri: 'http://www.google.com' };
+            dao.getClient.returns(Promise.resolve(validClient));
+            req.body.redirect_uri = 'http://www.google.com';
 
             await authorize(dao)(req, res, next);
 
             expect(next.getCall(0).args[0].statusCode).to.equal(400);
 
-            req.body = { ...validRequestParams, redirect_uri: 'http://localhost.fakeout.com' };
+            req.body.redirect_uri = 'http://localhost.fakeout.com';
 
             await authorize(dao)(req, res, next);
             expect(next.getCall(1).args[0].statusCode).to.equal(400);
         });
-        it('Should not return 400 error when all required params are provided and valid', async () => {
-            req.body = validRequestParams;
+        it('Should return 400 error when redirect_uri is not associated with provided client_id', async () => {
+            dao.getClient.returns(Promise.resolve(validClient));
+            req.body.redirect_uri = 'https://www.google.com';
 
             await authorize(dao)(req, res, next);
 
-            expect(next.getCall(0).args[0].statusCode).to.not.equal(400);
+            expect(next.getCall(0).args[0].statusCode).to.equal(400);
         });
-        it('Should return 404 error when login does not exist', async () => {
-            req.body = validRequestParams;
-
-            dao.checkLoginExists.returns(Promise.resolve(false));
+        it('Should not return 4XX error when all required params are provided and valid', async () => {
+            dao.getClient.returns(Promise.resolve(validClient));
 
             await authorize(dao)(req, res, next);
 
-            expect(next.getCall(0).args[0].statusCode).to.equal(404);
+            const returnedErrorCode = next
+                .getCall(0)
+                .args[0].statusCode.toString()
+                .startsWith('4');
+            expect(returnedErrorCode).to.equal(false);
         });
-        it('Should return 401 error when incorrect password provided', async () => {
-            req.body = validRequestParams;
+        // it('Should return 404 error when login does not exist', async () => {
+        //     dao.checkLoginExists.returns(Promise.resolve(false));
 
-            dao.checkLoginExists.returns(Promise.resolve(true));
-            dao.getUser.returns(Promise.resolve(null));
+        //     await authorize(dao)(req, res, next);
 
-            await authorize(dao)(req, res, next);
+        //     expect(next.getCall(0).args[0].statusCode).to.equal(404);
+        // });
+        // it('Should return 401 error when incorrect password provided', async () => {
+        //     dao.checkLoginExists.returns(Promise.resolve(true));
+        //     dao.getUser.returns(Promise.resolve(null));
 
-            expect(next.getCall(0).args[0].statusCode).to.equal(401);
-        });
+        //     await authorize(dao)(req, res, next);
+
+        //     expect(next.getCall(0).args[0].statusCode).to.equal(401);
+        // });
     });
 });
