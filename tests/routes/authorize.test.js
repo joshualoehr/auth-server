@@ -34,14 +34,13 @@ afterEach(() => {
 const testRequiredParam = param => async () => {
     delete req.body[param];
 
-    let next = sinon.spy();
     await authorize(dao)(req, res, next);
 
     expect(next.getCall(0).args[0].statusCode).to.equal(400);
 };
 
-describe('Authorize Route', () => {
-    describe('Implicit Flow', () => {
+describe('/authorize', () => {
+    describe('implicit flow', () => {
         REQUIRED_PARAMS.forEach(param => {
             it(`Should return 400 error when ${param} is not provided`, testRequiredParam(param));
         });
