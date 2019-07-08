@@ -23,7 +23,7 @@ const validClient = {
 
 beforeEach(() => {
     req = { body: { ...validRequestParams } };
-    res = { status: sinon.fake(), sendFile: sinon.spy() };
+    res = { render: sinon.spy() };
     next = sinon.spy();
 });
 
@@ -96,11 +96,12 @@ describe('/authorize', () => {
         });
         it('Should serve the login page when all required params are provided and valid', async () => {
             dao.getClient.returns(Promise.resolve(validClient));
+            dao.getUserConsent.returns(Promise.resolve(true));
 
             await authorize(dao)(req, res, next);
 
             expect(next.called).to.equal(false);
-            expect(res.sendFile.called).to.equal(true);
+            expect(res.render.called).to.equal(true);
         });
     });
 });

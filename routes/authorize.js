@@ -1,13 +1,6 @@
-const path = require('path');
-const { errorWithCode } = require('../util');
+const { errorWithCode, verifyRequiredParam } = require('../util');
 
 const REQUIRED_PARAMS = ['scope', 'response_type', 'client_id', 'redirect_uri', 'nonce'];
-
-const verifyRequiredParam = (param, req) => {
-    if (!req.body[param]) {
-        throw errorWithCode(`${param} is a required parameter`, 400);
-    }
-};
 
 const validateScope = scope => {
     if (!scope.split(' ').includes('openid')) {
@@ -69,7 +62,7 @@ module.exports = {
             config.redirect_uri = validateRedirectUri(redirect_uri, config.client);
             config.nonce = nonce;
 
-            res.sendFile(path.join(__dirname + '/../pages/login.html'));
+            res.render('login', { client_id: config.client.client_id, client_name: config.client.client_name });
         } catch (err) {
             next(err);
         }

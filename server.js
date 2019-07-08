@@ -1,4 +1,5 @@
 const express = require('express');
+const mustacheExpress = require('mustache-express');
 const app = express();
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -10,17 +11,32 @@ const Dao = require('./dao');
 const dao = new Dao(conn);
 
 // Configure middleware
+app.engine('mustache', mustacheExpress());
+app.set('view engine', 'mustache');
+app.set('views', __dirname + '/public');
+app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use((err, req, res, next) => {
     if (!err.statusCode) err.statusCode = 500;
-    res.status(err.statusCode).send(err.message);
+    res.status(err.statusCode).send({ message: err.message });
 });
 
 // Configure routes
-const { authorize, login } = require('./routes/authorize');
+const { authorize } = require('./routes/authorize');
+const { login } = require('./routes/login');
 app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'pages/index.html'));
+    res.render('index', {
+        pageData: JSON.stringify({
+            appName: 'Test App',
+            appDetail: 'Enter your AuthJL credentials to continue.',
+            scope: 'openid',
+            response_type: 'id_token token',
+            client_id: 'testApp',
+            redirect_uri: 'http://localhost:3001/redirect',
+            nonce: 'xyz123'
+        })
+    });
 });
 app.get('/authorize', (req, res, next) => {
     req.body = req.query;

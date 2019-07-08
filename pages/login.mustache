@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            div.main {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            input {
+                display: flex;
+                margin-bottom: 1.6rem;
+            }
+            .hidden {
+                display: none;
+            }
+            #errors {
+                margin-top: 1.6rem;
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main">
+            <div id="signin" class="main">
+                <h3>Please Sign In</h3>
+                <input id="username" name="username" type="text" placeholder="Username"/>
+                <input id="password" name="password" type="password" placeholder="Password"/>
+                <button onclick="login()">Sign In</button>
+            </div>
+            <div id="consent" class="hidden">
+                <h3>Hi <span style="margin-right: 0.8rem;" id="user_name"></span>(<span id="user_email"></span>)</h3>
+                <h4>{{ client_name }} wants to</h4>
+                <ul id="consent_list"></ul>
+                <h4>Allow {{ client_name }} to do this?</h4>
+                <div style="display: flex;">
+                    <button>Cancel</button>
+                    <button>Allow</button>
+                </div>
+            </div>
+            <div id="errors"></div>
+        </div>
+        <script type="text/javascript">
+            function login() {
+                document.getElementById('errors').innerText = '';
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const client_id = '{{ client_id }}';
+                fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password, client_id })
+                })
+                .then(response => {
+                    if (!response.ok) throw response;
+                    return response.json();
+                })
+                .then(({ user, consent }) => {
+                    if (!consent) {
+                        document.getElementById('user_name').innerText = `${user.first_name} ${user.last_name}`;
+                        document.getElementById('user_email').innerText = user.email;
+
+                        let consentItem = document.createElement('li');
+                        let consentText = document.createTextNode('Know who you are');
+                        consentItem.appendChild(consentText);
+                        document.getElementById('consent_list').appendChild(consentItem);
+
+                        document.getElementById('signin').classList.add('hidden');
+                        document.getElementById('signin').classList.remove('main');
+                        document.getElementById('consent').classList.add('main');
+                        document.getElementById('consent').classList.remove('hidden');
+                    }
+                })
+                .catch(err => {
+                    if (err.status === 401) {
+                        document.getElementById('errors').innerText = 'Invalid Username/Password';
+                    } else if (err.status === 400) {
+                        document.getElementById('errors').innerText = 'Please provide both Username and Password';
+                    } else {
+                        document.getElementById('errors').innerText = 'An unknown error occurred, please try again.';
+                    }
+                });
+            }
+
+            function consent() {
+                const username = document.getElementById('username').value;
+                const client_id = '{{ client_id }}';
+
+                fetch('/consent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, client_id })
+                }).catch(err => {
+                    document.getElementById('errors').innerText = 'An unknown error occurred, please try again.';
+                });
+            }
+        </script>
+    </body>
+</html>

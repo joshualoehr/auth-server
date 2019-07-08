@@ -18,6 +18,19 @@ CREATE TABLE users (
 
 CREATE TABLE oauth_clients (
 	client_id VARCHAR(20) NOT NULL PRIMARY KEY,
+    client_name VARCHAR(100),
     client_secret VARCHAR(100) NOT NULL,
     redirect_uri VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE users_clients (
+	user_id INT NOT NULL,
+    client_id VARCHAR(20) NOT NULL,
+    PRIMARY KEY (user_id, client_id),
+    FOREIGN KEY fk_users(user_id) REFERENCES users(user_id)
+    ON UPDATE CASCADE
+	ON DELETE RESTRICT,
+    FOREIGN KEY fk_clients(client_id) REFERENCES oauth_clients(client_id)
+    ON UPDATE CASCADE
+	ON DELETE RESTRICT
 );
