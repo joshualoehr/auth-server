@@ -66,8 +66,11 @@ class Dao {
 
     addUserConsent(username, client_id) {
         return new Promise((resolve, reject) => {
-            const sql = `INSERT INTO auth.users_clients (user_id, client_id) VALUES (?, ?)`;
-            this.db.query(sql, [username, client_id], (error, rows) => {
+            const sql = `INSERT INTO auth.users_clients (user_id, client_id)
+                         SELECT user_id, ?
+                         FROM auth.users u
+                         WHERE u.login = ?`;
+            this.db.query(sql, [client_id, username], (error, rows) => {
                 if (error) {
                     reject(errorWithCode(error));
                 } else {
