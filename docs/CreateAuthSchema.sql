@@ -19,6 +19,7 @@ CREATE TABLE users (
 CREATE TABLE oauth_clients (
 	client_id VARCHAR(20) NOT NULL PRIMARY KEY,
     client_name VARCHAR(100),
+	client_detail VARCHAR(200),
     client_secret VARCHAR(100) NOT NULL,
     redirect_uri VARCHAR(100) NOT NULL
 );

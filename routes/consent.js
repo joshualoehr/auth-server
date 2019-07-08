@@ -1,4 +1,5 @@
 const { errorWithCode, verifyRequiredParam } = require('../util');
+const jwt = require('jsonwebtoken');
 
 const REQUIRED_PARAMS = ['username', 'client_id'];
 
@@ -21,6 +22,9 @@ module.exports = {
             if (!success) {
                 throw errorWithCode(`An internal server error occurred`);
             }
+
+            const id_token = jwt.sign({ dat: 'boi' }, 'supersecret');
+            res.json(JSON.stringify({ id_token }));
         } catch (err) {
             next(err);
         }

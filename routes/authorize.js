@@ -62,7 +62,14 @@ module.exports = {
             config.redirect_uri = validateRedirectUri(redirect_uri, config.client);
             config.nonce = nonce;
 
-            res.render('login', { client_id: config.client.client_id, client_name: config.client.client_name });
+            res.render('index', {
+                pageData: JSON.stringify({
+                    client_id: config.client.client_id,
+                    client_name: config.client.client_name,
+                    client_detail: config.client.client_detail,
+                    redirect_uri: config.redirect_uri
+                })
+            });
         } catch (err) {
             next(err);
         }
